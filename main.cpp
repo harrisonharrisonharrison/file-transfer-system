@@ -52,9 +52,21 @@ int main() {
     });
 
     svr.Post("/upload", [](const httplib::Request& req, httplib::Response& res){
-        if (req.has_file("file_upload")){
+        if (req.form.has_file("file_upload")){
+            const auto& file = req.form.get_file("file_upload");
+            if (!file.filename.empty()){
+                fs::path filePath = fs::path(SHARED_DIR) / file.filename;
             
+                std::ofstream ofs(filePath, std::ios::binary);
+                if (ofs.is_open()){
+                    ofs.write(file.content.c_str(), file.content.size());
+                    ofs.close();
+                } else {
+                    std::cerr << "Failed to open file for writing: " << filePath << "\n";
+                }
+            }
         }
+        res.set_redirect("/");
     });
 }
 
