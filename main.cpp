@@ -86,7 +86,7 @@ int main() {
 
     std::cout << "======================================\n";
     std::cout << "1. Make sure your phone and PC are on the same WiFi network\n";
-    std::cout << "2. Find this PC's IP address\n";
+    std::cout << "2. Find this PC's IPv4 address\n";
     std::cout << "3. Open your phone browser and go to http://<YOUR_IP>:8080\n";
     std::cout << "======================================\n";
 
