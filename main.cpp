@@ -68,5 +68,20 @@ int main() {
         }
         res.set_redirect("/");
     });
+
+    svr.Get("/list", [](const httplib::Request& req, httplib::Response& res){
+        std::string html = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'></head><body style='font-family: sans-serif; padding: 20px;'>";
+        html += "<h2>Files on PC</h2><ul>";
+
+        for (const auto& entry : fs::directory_iterator(SHARED_DIR)) {
+            std::string filename = entry.path().filename().string();
+            html += "<li style='margin-bottom: 10px;'><a href='/download/" + filename + "'>" + filename + "</a></li>";
+        }
+
+        html += "</ul><br><a href='/'>Back to Home</a></body></html>";
+        res.set_content(html, "text/html");
+    });
+
+    svr.set_mount_point("/download", SHARED_DIR.c_str());
 }
 
