@@ -1,54 +1,35 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <sstream>
 #include "httplib.h"
 
 namespace fs = std::filesystem;
 
 const std::string SHARED_DIR = "./shared_files";
-
-const std::string HTML_CONTENT = R"(
-<!DOCTYPE html>
-<html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PC File Transfer</title>
-    <style>
-        body { font-family: -apple-system, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-        .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
-        button, input { margin-top: 10px; font-size: 16px; }
-        button { padding: 8px 16px; background: #007aff; color: white; border: none; border-radius: 6px; }
-    </style>
-</head>
-<body>
-    <h2>Phone <-> PC Transfer</h2>
-
-    <div class="box">
-        <h3>Upload to PC</h3>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="file_upload" required>
-            <br>
-            <button type="submit">Upload File</button>
-        </form>
-    </div>
-
-    <div class="box">
-        <h3>Download from PC</h3>
-        <a href="/list" style="color: #007aff; text-decoration: none; font-weight: bold;">View Available Files ➔</a>
-    </div>
-</body>
-</html>
-)";
+const std::string STATIC_DIR = "./static";
 
 int main() {
     if (!fs::exists(SHARED_DIR)){
         fs::create_directory(SHARED_DIR);
     }
+    if (!fs::exists(STATIC_DIR)){
+        fs::create_directory(STATIC_DIR);
+    }
 
     httplib::Server svr;
 
     svr.Get("/", [](const httplib::Request& req, httplib::Response& res) {
-        res.set_content(HTML_CONTENT, "text/html");
+        std::ifstream file(STATIC_DIR + "/index.html");
+        
+        if (file.is_open()) {
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            res.set_content(buffer.str(), "text/html");
+        } else {
+            res.status = 404;
+            res.set_content("Error: Could not find static/index.html. Make sure the folder and file exist.", "text/plain");
+        }
     });
 
     svr.Post("/upload", [](const httplib::Request& req, httplib::Response& res){
@@ -69,17 +50,45 @@ int main() {
         res.set_redirect("/");
     });
 
-    svr.Get("/list", [](const httplib::Request& req, httplib::Response& res){
-        std::string html = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'></head><body style='font-family: sans-serif; padding: 20px;'>";
-        html += "<h2>Files on PC</h2><ul>";
-
-        for (const auto& entry : fs::directory_iterator(SHARED_DIR)) {
-            std::string filename = entry.path().filename().string();
-            html += "<li style='margin-bottom: 10px;'><a href='/download/" + filename + "'>" + filename + "</a></li>";
+    svr.Get("/list", [](const httplib::Request &req, httplib::Response &res){
+        std::ifstream file(STATIC_DIR + "/list.html");
+        std::string html;
+        
+        if (file.is_open()) {
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            html = buffer.str();
+        } else {
+            res.status = 404;
+            res.set_content("Error: Could not find static/list.html", "text/plain");
+            return;
         }
 
-        html += "</ul><br><a href='/'>Back to Home</a></body></html>";
-        res.set_content(html, "text/html");
+        std::string rows;
+        bool hasFiles = false;
+
+        for (const auto& entry : fs::directory_iterator(SHARED_DIR)) {
+            hasFiles = true;
+            std::string filename = entry.path().filename().string();
+            rows += "<li class='file-row'><a href='/download/" + filename + "'>" + filename
+                + "</a><span class='download-icon'>&#8595;</span></li>";
+        }
+
+        if (hasFiles) {
+            html += "<ul class='file-list'>" + rows + "</ul>";
+        } else {
+            html += R"(<div class="empty-state">
+            <h2>No files yet</h2>
+            <p>Upload a file from your phone to see it here.</p>
+            </div>)";
+        }
+
+        html += R"(</div>
+        <a href="/" class="btn btn-secondary">Back to Home</a>
+        </body>
+        </html>)";
+
+        res.set_content(html, "text/html"); 
     });
 
     svr.set_mount_point("/download", SHARED_DIR.c_str());

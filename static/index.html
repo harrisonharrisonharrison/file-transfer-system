@@ -1,66 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PC File Transfer</title>
-<link rel="stylesheet" href="/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC File Transfer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #FFFFFF;
+            --surface: #FAFAFA;
+            --border: #EAEAEA;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --accent: #000000;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: var(--bg);
+            padding: 32px 24px;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 24px 0;
+            letter-spacing: -0.02em;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0 0 16px 0;
+        }
+
+        .card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            height: 36px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 6px 8px;
+            background: var(--bg);
+            transition: border 100ms ease;
+        }
+
+        input[type="file"]:focus {
+            outline: none;
+            border: 1px solid var(--text-primary);
+        }
+
+        button {
+            margin-top: 16px;
+            height: 36px;
+            padding: 0 16px;
+            font-size: 14px;
+            font-weight: 500;
+            background: var(--accent);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: opacity 100ms ease;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        button:active {
+            opacity: 0.7;
+        }
+
+        .link-action {
+            display: inline-flex;
+            align-items: center;
+            height: 36px;
+            padding: 0 16px;
+            border: 1px solid var(--text-primary);
+            border-radius: 2px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 100ms ease, color 100ms ease;
+        }
+
+        .link-action:hover {
+            background: var(--text-primary);
+            color: #FFFFFF;
+        }
+
+        .subtext {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin: -8px 0 16px 0;
+        }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Upload to PC</h2>
-    <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
-      <span class="field-label">File</span>
-      <div class="file-input-wrapper">
-        <span class="file-input-label" id="file-label">No file selected</span>
-        <button type="button" class="browse-btn" id="browse-btn">Browse</button>
-        <input type="file" name="file_upload" id="file-input" required>
-      </div>
+    <h2>Phone to PC Transfer</h2>
 
-      <div class="error-msg" id="error-msg">
-        <span>&#9888;</span>
-        <span>Please choose a file before uploading.</span>
-      </div>
+    <div class="card">
+        <h3>Upload to PC</h3>
+        <p class="subtext">Choose a file from your phone to send to this computer.</p>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file_upload" required>
+            <br>
+            <button type="submit">Upload File</button>
+        </form>
+    </div>
 
-      <button type="submit" class="btn btn-primary" id="upload-btn" disabled>Upload File</button>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2>Download from PC</h2>
-    <a href="/list" class="btn btn-secondary">View Available Files</a>
-  </div>
-
-  <script>
-    const fileInput = document.getElementById('file-input');
-    const fileLabel = document.getElementById('file-label');
-    const browseBtn = document.getElementById('browse-btn');
-    const uploadBtn = document.getElementById('upload-btn');
-    const errorMsg = document.getElementById('error-msg');
-    const form = document.getElementById('upload-form');
-
-    browseBtn.addEventListener('click', () => fileInput.click());
-
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length > 0) {
-        fileLabel.textContent = fileInput.files[0].name;
-        fileLabel.style.color = 'var(--text-primary)';
-        uploadBtn.disabled = false;
-        errorMsg.classList.remove('visible');
-      } else {
-        fileLabel.textContent = 'No file selected';
-        fileLabel.style.color = 'var(--text-secondary)';
-        uploadBtn.disabled = true;
-      }
-    });
-
-    form.addEventListener('submit', (e) => {
-      if (!fileInput.files.length) {
-        e.preventDefault();
-        errorMsg.classList.add('visible');
-      }
-    });
-  </script>
-
+    <div class="card">
+        <h3>Download from PC</h3>
+        <p class="subtext">Browse files currently shared from this computer.</p>
+        <a class="link-action" href="/list">View Available Files</a>
+    </div>
 </body>
 </html>
