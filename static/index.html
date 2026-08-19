@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PC File Transfer</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="card">
+    <h2>Upload to PC</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+      <span class="field-label">File</span>
+      <div class="file-input-wrapper">
+        <span class="file-input-label" id="file-label">No file selected</span>
+        <button type="button" class="browse-btn" id="browse-btn">Browse</button>
+        <input type="file" name="file_upload" id="file-input" required>
+      </div>
+
+      <div class="error-msg" id="error-msg">
+        <span>&#9888;</span>
+        <span>Please choose a file before uploading.</span>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="upload-btn" disabled>Upload File</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Download from PC</h2>
+    <a href="/list" class="btn btn-secondary">View Available Files</a>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const fileLabel = document.getElementById('file-label');
+    const browseBtn = document.getElementById('browse-btn');
+    const uploadBtn = document.getElementById('upload-btn');
+    const errorMsg = document.getElementById('error-msg');
+    const form = document.getElementById('upload-form');
+
+    browseBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        fileLabel.textContent = fileInput.files[0].name;
+        fileLabel.style.color = 'var(--text-primary)';
+        uploadBtn.disabled = false;
+        errorMsg.classList.remove('visible');
+      } else {
+        fileLabel.textContent = 'No file selected';
+        fileLabel.style.color = 'var(--text-secondary)';
+        uploadBtn.disabled = true;
+      }
+    });
+
+    form.addEventListener('submit', (e) => {
+      if (!fileInput.files.length) {
+        e.preventDefault();
+        errorMsg.classList.add('visible');
+      }
+    });
+  </script>
+
+</body>
+</html>
