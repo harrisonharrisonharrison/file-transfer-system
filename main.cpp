@@ -90,7 +90,8 @@ int main() {
     std::cout << "3. Open your phone browser and go to http://<YOUR_IP>:8080\n";
     std::cout << "======================================\n";
 
+    svr.listen("0.0.0.0", 8080);
     
-
+    return 0;
 }
 
