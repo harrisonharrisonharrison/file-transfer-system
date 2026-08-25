@@ -3,11 +3,22 @@
 #include <filesystem>
 #include <sstream>
 #include "httplib.h"
+#include <cstdlib>
 
 namespace fs = std::filesystem;
 
 const std::string SHARED_DIR = "./shared_files";
 const std::string STATIC_DIR = "./static";
+
+void start_cloudflare_tunnel() {
+    if (!std::filesystem::exists("cloudflared.exe")) {
+        std::cout << "Downloading Cloudflare Tunnel...\n";
+        std::system("curl -L -o cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe");
+    }
+
+    std::cout << "Launching Cloudflare tunnel...\n";
+    std::system("start cmd /k cloudflared.exe tunnel --url http://localhost:8080");
+}
 
 int main() {
     if (!fs::exists(SHARED_DIR)){
@@ -94,11 +105,11 @@ int main() {
     svr.set_mount_point("/download", SHARED_DIR.c_str());
 
     std::cout << "======================================\n";
-    std::cout << "1. Make sure your phone and PC are on the same WiFi network\n";
-    std::cout << "2. Find this PC's IPv4 address\n";
-    std::cout << "3. Open your phone browser and go to http://<YOUR_IP>:8080\n";
+    std::cout << "Starting server on port 8080...\n";
+    std::cout << "Look at the new window for your public URL!\n";
     std::cout << "======================================\n";
 
+    start_cloudflare_tunnel();
     svr.listen("0.0.0.0", 8080);
     
     return 0;
