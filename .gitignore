@@ -1,3 +1,4 @@
 /build
 /shared_files
 cloudflared.exe
+tunnel.log

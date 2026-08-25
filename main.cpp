@@ -4,6 +4,8 @@
 #include <sstream>
 #include "httplib.h"
 #include <cstdlib>
+#include <thread>
+#include <chrono>
 
 namespace fs = std::filesystem;
 
@@ -13,11 +15,53 @@ const std::string STATIC_DIR = "./static";
 void start_cloudflare_tunnel() {
     if (!std::filesystem::exists("cloudflared.exe")) {
         std::cout << "Downloading Cloudflare Tunnel...\n";
-        std::system("curl -L -o cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe");
+        std::system("curl -s -L -o cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe");
     }
 
-    std::cout << "Launching Cloudflare tunnel...\n";
-    std::system("start cmd /k cloudflared.exe tunnel --url http://localhost:8080");
+    if (std::filesystem::exists("tunnel.log")) {
+        std::filesystem::remove("tunnel.log");
+    }
+
+    std::cout << "Requesting secure public URL from Cloudflare...\n";
+    
+    std::system("start /B cmd /c \"cloudflared.exe tunnel --url http://localhost:8080 > tunnel.log 2>&1\"");
+    
+    std::thread([]() {
+        std::string url = "";
+        
+        for (int i = 0; i < 15; ++i) { 
+            std::ifstream log("tunnel.log");
+            if (log.is_open()) {
+                std::string line;
+                while (std::getline(log, line)) {
+                    size_t start = line.find("https://");
+                    if (start != std::string::npos) {
+                        size_t end = line.find(".trycloudflare.com", start);
+                        if (end != std::string::npos) {
+                            url = line.substr(start, (end + 18) - start);
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!url.empty()) break;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+        
+        if (!url.empty()) {
+            std::cout << "\n======================================================\n";
+            std::cout << " PUBLIC TUNNEL ESTABLISHED\n";
+            std::cout << " URL: " << url << "\n";
+            std::cout << "======================================================\n";
+            std::cout << "Scan this QR code with your phone camera:\n\n";
+            
+            std::string qr_cmd = "curl -s https://qrenco.de/" + url;
+            std::system(qr_cmd.c_str());
+            std::cout << "\n";
+        } else {
+            std::cout << "\n[!] Failed to extract Cloudflare URL. Check tunnel.log.\n";
+        }
+    }).detach();
 }
 
 int main() {
@@ -103,11 +147,6 @@ int main() {
     });
 
     svr.set_mount_point("/download", SHARED_DIR.c_str());
-
-    std::cout << "======================================\n";
-    std::cout << "Starting server on port 8080...\n";
-    std::cout << "Look at the new window for your public URL!\n";
-    std::cout << "======================================\n";
 
     start_cloudflare_tunnel();
     svr.listen("0.0.0.0", 8080);
